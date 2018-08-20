@@ -70,11 +70,20 @@ class LoginHandler extends BaseHandler
     {
         $token = $args->get('token');
         $services_requested = $args->get('services');
-        if ($token === null || $services_requested === null)
+        $services_secrets = $args->get('secrets');
+        if ($token === null || $services_requested === null || $services_secrets === null || count($services_requested) !== count($services_secrets))
             return $response->withStatus(400);
 
-        // TODO: each service should be identified by some shared secret (something encrypted using that secret) !!!
-        //       also we may want to specify valid IPs/hostnames for each service
+        // check each service - if it exists and if it supplies valid secret
+        foreach ($services_requested as $i => $srv)
+        {
+            $serviceRecord = $this->services()->getServiceByName($srv);
+            if (!$serviceRecord)
+                return $response->withStatus(404);
+            // case-sensitive comparison
+            if (strcmp($serviceRecord['secret'], $services_secrets[$i]) !== 0)
+                return $response->withStatus(409);
+        }
 
         // look-up token info; if the token is not valid, or is not created for requested services, abort
         $info = $this->auth()->getTokenInfo($token);

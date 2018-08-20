@@ -12,6 +12,8 @@ abstract class BaseHandler
 
     /** @var UserModel */
     private $usersDb = null;
+    /** @var ServiceModel */
+    private $servicesDb = null;
     /** @var AuthModel */
     private $auth = null;
 
@@ -33,6 +35,17 @@ abstract class BaseHandler
         if ($this->usersDb === null)
             $this->usersDb = new UserModel($this->db);
         return $this->usersDb;
+    }
+
+    /**
+     * Retrieves services model (initializes new if needed)
+     * @return ServiceModel
+     */
+    protected function services()
+    {
+        if ($this->servicesDb === null)
+            $this->servicesDb = new ServiceModel($this->db);
+        return $this->servicesDb;
     }
 
     /**
