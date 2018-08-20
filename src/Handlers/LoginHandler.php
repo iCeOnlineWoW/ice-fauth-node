@@ -30,6 +30,7 @@ class LoginHandler extends BaseHandler
         else if ($auth_type === AuthType::PUBKEY)
         {
             // TODO
+            // pubkey authentication should have slightly different flow
         }
 
         // bad username or auth info
@@ -58,12 +59,7 @@ class LoginHandler extends BaseHandler
 
         // now everything should be valid, let us create token, store it to database and send it to user
 
-        // at first, see if there's a token for those services - if yes, invalidate it
-        $existing = $this->auth()->getTokenForServices($usr['id'], $services);
-        if ($existing->valid)
-            $this->auth()->removeToken($existing->id);
-
-        $token = $this->auth()->generateToken($auth_id);
+        $token = $this->createToken($usr['id'], $auth_id, $services);
 
         return $response->withStatus(200)->withJson([
             'auth_token' => $token->token,
@@ -77,6 +73,9 @@ class LoginHandler extends BaseHandler
         if ($token === null || $services_requested === null)
             return $response->withStatus(400);
 
+        // TODO: each service should be identified by some shared secret (something encrypted using that secret) !!!
+        //       also we may want to specify valid IPs/hostnames for each service
+
         // look-up token info; if the token is not valid, or is not created for requested services, abort
         $info = $this->auth()->getTokenInfo($token);
         if (!$info->valid)
@@ -84,6 +83,17 @@ class LoginHandler extends BaseHandler
         if (count(array_intersect($info->services, $services_requested)) !== count($services_requested))
             return $response->withStatus(401);
 
-        return $response->withStatus(200);
+        $usr = $this->users()->getUserById($info->users_id);
+        // this should not happen, because database constraints and foreign keys and stuff
+        if (!$usr)
+            return $response->withStatus(401);
+
+        // we don't want to expose user ID, because that's our internal information
+        // rather, services should identify user by his unique username or email
+        unset($usr['id']);
+
+        return $response->withStatus(200)->withJson([
+            'user' => $usr
+        ]);
     }
 }

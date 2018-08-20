@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>FAuth Login</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <!-- TODO: rework this to actually look like a serious login page -->
+        <form method="POST" action="{{BASE_URL}}/login-request?callback={{CALLBACK_URL_ENCODED}}&service={{SERVICE_ENCODED}}&lang={{LANGUAGE_ENCODED}}">
+            {{LANG:username}}<br />
+            <input type="text" name="username" /><br />
+            {{LANG:password}}:<br />
+            <input type="password" name="password" /><br />
+            <input type="hidden" name="service" value="{{SERVICE}}" />
+            <input type="hidden" name="lang" value="{{LANGUAGE}}" />
+            <input type="hidden" name="callback" value="{{CALLBACK_URL}}" />
+            <input type="submit" value="{{LANG:login_submit}}" />
+        </form>
+        <p style="color: red">
+            {{ERROR_STR}}
+        </p>
+    </body>
+</html>

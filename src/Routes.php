@@ -8,8 +8,12 @@ use Slim\Http\Response;
 $REQUEST_MAP = [
     'LoginHandler' => [
         [ '/login', 'POST', 'handleLogin' ],
-        [ '/validate-token', 'POST', 'handleValidateToken' ]
-    ]
+        [ '/validate-token', 'POST', 'handleValidateToken' ],
+    ],
+    'ExternLoginHandler' => [
+        [ '/login-request', 'GET', 'handleExternalLoginRequest' ],
+        [ '/login-request', 'POST', 'handleFormLoginRequest' ],
+    ],
 ];
 
 // map each request to given handler and function

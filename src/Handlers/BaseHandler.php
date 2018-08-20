@@ -45,4 +45,21 @@ abstract class BaseHandler
             $this->auth = new AuthModel($this->db);
         return $this->auth;
     }
+
+    /**
+     * Creates token for given service, replaces existing if needed
+     * @param int $users_id
+     * @param int $auth_id
+     * @param array $services
+     * @return TokenInfo
+     */
+    protected function createToken($users_id, $auth_id, $services): TokenInfo
+    {
+        // at first, see if there's a token for those services - if yes, invalidate it
+        $existing = $this->auth()->getTokenForServices($users_id, $services);
+        if ($existing->valid)
+            $this->auth()->removeToken($existing->id);
+
+        return $this->auth()->generateToken($auth_id);
+    }
 }
