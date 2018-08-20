@@ -1,0 +1,21 @@
+{
+    "name": "iceonline/ice-fauth-node",
+    "description": "FAuth (Frozen authenticator) node",
+    "keywords": ["ice", "icewow", "iceonline", "fauth", "frozenauth"],
+    "homepage": "https://ice-wow.eu/",
+    "authors": [
+        {
+            "name": "Gregory",
+            "email": "gregory@ice-wow.eu",
+            "homepage": "http://www.kennny.cz/"
+        }
+    ],
+    "require": {
+        "php": ">=7.0",
+        "slim/slim": "^3.1",
+        "slim/php-view": "^2.0",
+        "monolog/monolog": "^1.17",
+        "robmorgan/phinx": "~0.5",
+        "dibi/dibi": "^4.0"
+    }
+}

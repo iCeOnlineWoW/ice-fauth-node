@@ -1,0 +1,6 @@
+/vendor/
+/logs/*
+phinx.yml
+src/Config.php
+composer.lock
+/nbproject/
