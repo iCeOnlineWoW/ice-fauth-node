@@ -29,4 +29,23 @@ class ServiceModel extends BaseModel
     {
         return $this->db->query("SELECT * FROM services WHERE name = ?", $name)->fetch();
     }
+
+    /**
+     * Retrieves service stored data for given user
+     * @param int $users_id
+     * @param int $services_id
+     * @return array
+     */
+    public function getUserServiceData($users_id, $services_id): array
+    {
+        $res = $this->db->query("SELECT * FROM user_service_data WHERE users_id = ? AND services_id = ?", $users_id, $services_id)->fetch();
+        if (!$res || !$res['data'] || strlen($res['data']) === 0)
+            return [];
+
+        $decoded = json_decode($res['data'], true);
+        if (!$decoded)
+            return [];
+
+        return $decoded;
+    }
 }

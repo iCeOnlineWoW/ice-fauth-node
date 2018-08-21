@@ -74,6 +74,9 @@ class LoginHandler extends BaseHandler
         if ($token === null || $services_requested === null || $services_secrets === null || count($services_requested) !== count($services_secrets))
             return $response->withStatus(400);
 
+        // we store service records for later
+        $services = [];
+
         // check each service - if it exists and if it supplies valid secret
         foreach ($services_requested as $i => $srv)
         {
@@ -83,6 +86,8 @@ class LoginHandler extends BaseHandler
             // case-sensitive comparison
             if (strcmp($serviceRecord['secret'], $services_secrets[$i]) !== 0)
                 return $response->withStatus(409);
+
+            $services[$i] = $serviceRecord;
         }
 
         // look-up token info; if the token is not valid, or is not created for requested services, abort
@@ -97,12 +102,17 @@ class LoginHandler extends BaseHandler
         if (!$usr)
             return $response->withStatus(401);
 
+        $serviceData = [];
+        foreach ($services as $srv)
+            $serviceData[$srv['name']] = $this->services()->getUserServiceData($usr['id'], $srv['id']);
+
         // we don't want to expose user ID, because that's our internal information
         // rather, services should identify user by his unique username or email
         unset($usr['id']);
 
         return $response->withStatus(200)->withJson([
-            'user' => $usr
+            'user' => $usr,
+            'services' => $serviceData
         ]);
     }
 }
