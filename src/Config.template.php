@@ -14,12 +14,12 @@ return [
 
         // Dibi settings
         'dibi' => [
-            'driver' => '${DBDRIVER}',
-            'port' => ${DBPORT},
-            'host' => '${DBHOST}',
-            'username' => '${DBUSER}',
-            'password' => '${DBPASS}',
-            'database' => '${DBNAME}',
+            'driver' => '${DB_DBMS}',
+            'port' => ${DB_PORT},
+            'host' => '${DB_HOST}',
+            'username' => '${DB_USERNAME}',
+            'password' => '${DB_PASSWORD}',
+            'database' => '${DB_DBNAME}',
         ]
     ],
 ];
