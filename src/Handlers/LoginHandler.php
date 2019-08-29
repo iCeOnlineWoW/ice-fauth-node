@@ -8,18 +8,46 @@ use Slim\Http\Response;
  */
 class LoginHandler extends BaseHandler
 {
+    /**
+     * Return codes:
+     *      200 - OK
+     *      400 - request body does not contain everything it should
+     *      401 - bad username or password
+     *      403 - caller is not a valid service provider
+     *      405 - requested service array contains at least one, that is not active for given user
+     *      406 - given auth string (password, ..) is disabled for this user
+     *      409 - service provider IP exceeded maximum number of attempts
+     *      410 - validity of given auth string (password, ..) expired
+     *      412 - attempts for given username exceeded the limit
+     */
     public function handleLogin(Request $request, Response $response, ParameterContainer $args)
     {
         $username = $args->get('username');
         $auth_type = $args->get('auth_type');
         $auth_string = $args->get('auth_string');
         $services_requested = $args->get('services');
-        if ($username === null || $auth_type === null || $auth_string === null)
+        $service_provider_str = $args->get('service_provider_name');
+        $service_provider_secret = $args->get('service_provider_secret');
+        if ($username === null || $auth_type === null || $auth_string === null || $service_provider_str === null || $service_provider_secret === null)
             return $response->withStatus(400);
+
+        $remoteIP = $this->getRemoteIP();
+
+        if ($this->guard()->getFailCountForServiceProviderIP($remoteIP) >= $this->guard()->getMaxServiceProviderIPAttempts())
+            return $response->withStatus(409);
+
+        if (!$this->services()->validateServiceSecret($service_provider_str, $service_provider_secret))
+        {
+            $this->guard()->accumulateFailForServiceProviderIP($remoteIP);
+            return $response->withStatus(403);
+        }
 
         $usr = $this->users()->getUserByUsername($username);
         if (!$usr)
             return $response->withStatus(401);
+
+        if ($this->guard()->getFailCountForUsername($username) >= $this->guard()->getMaxUsernameAttempts())
+            return $response->withStatus(412);
 
         $rc = ReturnCode::FAIL_AUTH_FAILED;
         $auth_id = 0;
@@ -35,7 +63,11 @@ class LoginHandler extends BaseHandler
 
         // bad username or auth info
         if ($rc === ReturnCode::FAIL_AUTH_FAILED)
+        {
+            $this->guard()->accumulateFailForUsername($username);
+
             return $response->withStatus(401);
+        }
         // auth info expired (due to validity period specified by user)
         else if ($rc === ReturnCode::FAIL_AUTH_EXPIRED)
             return $response->withStatus(410);
@@ -66,6 +98,15 @@ class LoginHandler extends BaseHandler
         ]);
     }
 
+    /**
+     * Return codes:
+     *      200 - OK
+     *      400 - request body does not contain everything it should
+     *      401 - token is not valid for given (sub)set of services
+     *      404 - requested service not found
+     *      409 - service secret does not match
+     *      410 - token is not valid (expired, or never was)
+     */
     public function handleValidateToken(Request $request, Response $response, ParameterContainer $args)
     {
         $token = $args->get('token');

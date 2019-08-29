@@ -16,6 +16,8 @@ abstract class BaseHandler
     private $servicesDb = null;
     /** @var AuthModel */
     private $auth = null;
+    /** @var GuardBaseModel */
+    private $guard = null;
 
     /**
      * Startup method to be called before every request processing
@@ -24,6 +26,7 @@ abstract class BaseHandler
     {
         $this->log = $app->logger;
         $this->db = $app->db;
+        $this->guard = $app->guard_model;
     }
 
     /**
@@ -60,6 +63,15 @@ abstract class BaseHandler
     }
 
     /**
+     * Retrieves guard model created by container
+     * @return GuardBaseModel
+     */
+    protected function guard()
+    {
+        return $this->guard;
+    }
+
+    /**
      * Creates token for given service, replaces existing if needed
      * @param int $users_id
      * @param int $auth_id
@@ -74,5 +86,27 @@ abstract class BaseHandler
             $this->auth()->removeToken($existing->id);
 
         return $this->auth()->generateToken($auth_id);
+    }
+
+    /**
+     * Retrieves remote IP address; considers the possibility of (r)proxy
+     * being on the way
+     * @return string
+     */
+    protected function getRemoteIP(): string
+    {
+        if (getenv('HTTP_CLIENT_IP'))
+            return getenv('HTTP_CLIENT_IP');
+        else if(getenv('HTTP_X_FORWARDED_FOR'))
+            return getenv('HTTP_X_FORWARDED_FOR');
+        else if(getenv('HTTP_X_FORWARDED'))
+            return getenv('HTTP_X_FORWARDED');
+        else if(getenv('HTTP_FORWARDED_FOR'))
+            return getenv('HTTP_FORWARDED_FOR');
+        else if(getenv('HTTP_FORWARDED'))
+            return getenv('HTTP_FORWARDED');
+        else if(getenv('REMOTE_ADDR'))
+            return getenv('REMOTE_ADDR');
+        return "0.0.0.0";
     }
 }

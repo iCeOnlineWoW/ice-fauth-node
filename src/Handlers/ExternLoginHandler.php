@@ -37,18 +37,40 @@ class ExternLoginHandler extends BaseHandler
         $service = $request->getParam('service');
         $language = $request->getParam('lang', 'en');
 
-        $usr = $this->users()->getUserByUsername($username);
-        if (!$usr)
-            $rc = ReturnCode::FAIL_AUTH_FAILED;
+        $remoteIP = $this->getRemoteIP();
+
+        if ($this->guard()->getFailCountForIP($remoteIP) >= $this->guard()->getMaxIPAttempts())
+            $rc = ReturnCode::FAIL_ATTEMPTS_IP;
         else
-            $rc = $this->auth()->validatePasswordAuth($usr['id'], $password, $auth_id, $services);
+        {
+            $usr = $this->users()->getUserByUsername($username);
+            if (!$usr)
+                $rc = ReturnCode::FAIL_AUTH_FAILED;
+            else
+            {
+                if ($this->guard()->getFailCountForUsername($username) >= $this->guard()->getMaxUsernameAttempts())
+                    $rc = ReturnCode::FAIL_ATTEMPTS_USERNAME;
+                else
+                    $rc = $this->auth()->validatePasswordAuth($usr['id'], $password, $auth_id, $services);
+            }
+        }
 
         if ($rc !== ReturnCode::OK)
         {
             $pageContents = null;
 
+            // accumulate attempt count if not already exceeded the limit
+            if ($rc !== ReturnCode::FAIL_ATTEMPTS_USERNAME && $rc !== ReturnCode::FAIL_ATTEMPTS_IP)
+            {
+                // accumulate username count only if user with such username exists
+                if ($usr)
+                    $this->guard()->accumulateFailForUsername($username);
+                $this->guard()->accumulateFailForIP($remoteIP);
+            }
+
             // bad username/password, expired or disabled auth info
-            if ($rc === ReturnCode::FAIL_AUTH_FAILED || $rc === ReturnCode::FAIL_AUTH_EXPIRED || $rc === ReturnCode::FAIL_AUTH_DISABLED)
+            if ($rc === ReturnCode::FAIL_AUTH_FAILED || $rc === ReturnCode::FAIL_AUTH_EXPIRED || $rc === ReturnCode::FAIL_AUTH_DISABLED
+                    || $rc === ReturnCode::FAIL_ATTEMPTS_USERNAME || $rc === ReturnCode::FAIL_ATTEMPTS_IP)
                 $pageContents = $this->renderLogin($request->getUri()->getBasePath(), $service, $language, $callback, "auth_err_".$rc);
             // other error code is considered generic auth fail
             else

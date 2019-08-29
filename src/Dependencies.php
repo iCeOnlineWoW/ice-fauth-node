@@ -17,3 +17,16 @@ $container['db'] = function ($c) {
     $dibi = new Dibi\Connection($settings);
     return $dibi;
 };
+
+$container['guard_model'] = function($c) {
+    $cfg = $c->get('settings')['guard'];
+    if ($cfg)
+    {
+        if ($cfg['driver'] == 'redis')
+            return new GuardRedisModel($cfg);
+        else if ($cfg['driver'] == 'sql')
+            return new GuardSQLModel($cfg);
+    }
+
+    return null;
+};

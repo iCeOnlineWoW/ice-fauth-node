@@ -13,4 +13,8 @@ class ReturnCode
     const FAIL_AUTH_EXPIRED = 'fail_auth_expired';
     // auth info is disabled
     const FAIL_AUTH_DISABLED = 'fail_auth_disabled';
+    // auth failed - number of attempts exceeded for username
+    const FAIL_ATTEMPTS_USERNAME = 'fail_attempts_username';
+    // auth failed - number of attempts exceeded for IP address
+    const FAIL_ATTEMPTS_IP = 'fail_attempts_ip';
 }

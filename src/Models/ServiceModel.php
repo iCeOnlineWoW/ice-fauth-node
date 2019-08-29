@@ -31,6 +31,22 @@ class ServiceModel extends BaseModel
     }
 
     /**
+     * Validates service secret proof
+     * @param string $name
+     * @param string $secret
+     * @return bool
+     */
+    public function validateServiceSecret($name, $secret): bool
+    {
+        $service = $this->getServiceByName($name);
+        if (!$service)
+            return false;
+        if (strcmp($service['secret'], $secret) !== 0)
+            return false;
+        return true;
+    }
+
+    /**
      * Retrieves service stored data for given user
      * @param int $users_id
      * @param int $services_id
@@ -47,5 +63,10 @@ class ServiceModel extends BaseModel
             return [];
 
         return $decoded;
+    }
+
+    public function setUserServiceData()
+    {
+        //
     }
 }

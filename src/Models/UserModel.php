@@ -12,6 +12,22 @@ class UserModel extends BaseModel
     }
 
     /**
+     * Validates username format
+     * @param string $username
+     * @return bool
+     */
+    public static function validateUsernameFormat(string $username): bool
+    {
+        if (strlen($username) < 2 || strlen($username) > 32)
+            return false;
+
+        if (preg_match('/[^A-Za-z0-9?!_\-\.]/', $string))
+            return false;
+
+        return true;
+    }
+
+    /**
      * Retrieves user by his ID
      * @param int $id
      * @return array | null
@@ -49,6 +65,9 @@ class UserModel extends BaseModel
      */
     public function addUser($username, $email): int
     {
+        if (!self::validateUsernameFormat($username))
+            return -1;
+
         $this->db->query("INSERT INTO users", [
             'username' => $username,
             'email' => $email

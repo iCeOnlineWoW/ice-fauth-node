@@ -51,6 +51,13 @@ if ($userModel->getUserByEmail($email))
 
 // add user, create password
 $users_id = $userModel->addUser($username, $email);
-$authModel->addPasswordAuth($users_id, $password, $services);
+if ($users_id > 0)
+{
+    $authModel->addPasswordAuth($users_id, $password, $services);
 
-echo "User $username with email $email created successfully!\r\n";
+    echo "User $username with email $email created successfully!\r\n";
+}
+else
+{
+    echo "User has NOT been created! Username or email is probably invalid.\r\n";
+}

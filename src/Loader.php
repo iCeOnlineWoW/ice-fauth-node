@@ -3,7 +3,7 @@
 // use custom class loader for lazy class loading
 function class_loader($class_name)
 {
-    $subdirs = array('/Handlers/', '/Models/', '/Misc/', '/Enums/');
+    $subdirs = array('/Handlers/', '/Models/', '/Models/Guard/', '/Misc/', '/Enums/');
 
     foreach ($subdirs as $subdir)
     {
