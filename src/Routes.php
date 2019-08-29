@@ -32,3 +32,24 @@ foreach ($REQUEST_MAP as $handler => $requests)
         });
     }
 }
+
+$container = $app->getContainer();
+
+// method not allowed - do not bother with exhaustive info, just send code
+$container['notAllowedHandler'] = function($container) {
+    return function ($request, $response, $methods) use ($container) {
+        return $response->withStatus(405)
+            ->withHeader('Allow', implode(', ', $methods))
+            ->withHeader('Content-type', 'text/html')
+            ->write('');
+    };
+};
+
+// page not found - again, just send 404 code
+$container['notFoundHandler'] = function($container) {
+    return function ($request, $response) use ($container) {
+        return $response->withStatus(404)
+            ->withHeader('Content-type', 'text/html')
+            ->write('');
+    };
+};
