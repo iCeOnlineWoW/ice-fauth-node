@@ -1,24 +1,88 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>FAuth Login</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body>
-        <!-- TODO: rework this to actually look like a serious login page -->
-        <form method="POST" action="{{BASE_URL}}/login-request?callback={{CALLBACK_URL_ENCODED}}&service={{SERVICE_ENCODED}}&lang={{LANGUAGE_ENCODED}}">
-            {{LANG:username}}<br />
-            <input type="text" name="username" /><br />
-            {{LANG:password}}:<br />
-            <input type="password" name="password" /><br />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>FAuth Login</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap&subset=latin-ext" rel="stylesheet">
+    <!-- minimalize the transferred size by not using any frameworks and styling just the necessary minimum of elements -->
+    <style>
+        body,html,* { box-sizing: border-box; padding: 0; margin: 0; font-family: 'Roboto', Arial, sans-serif; }
+        @media screen and (min-width: 980px) {
+            #login-container { width: 30%; margin: auto; margin-top: 3em; };
+        }
+        @media screen and (max-width: 979px) {
+            #login-container { width: 70%; margin: auto; margin-top: 2em; };
+        }
+        @media screen and (max-width: 500px) {
+            #login-container { width: 95%; margin: auto; margin-top: 1em; };
+        }
+        #login-container { height: auto; padding: 1em; border: 1px solid #dde0e7; background: #ffffff; border-radius: 20px; -webkit-box-shadow: 0px 0px 10px 0px rgba(209,210,214,1);
+                            -moz-box-shadow: 0px 0px 10px 0px rgba(209,210,214,1); box-shadow: 0px 0px 10px 0px rgba(209,210,214,1); }
+        label { display: block; font-weight: normal; margin: 0 0 0.5em 0; padding: 0; }
+        h2 { margin-bottom: 0.5em; width: 100%; text-align: center; }
+        input { outline: none !important; border: none; appearance: none; -webkit-appearance: none; }
+        input { width: 100%; margin: 0 0 1em 0; line-height: 3em; border: 1px solid #d1d2d6; border-radius: 5px; outline: none;
+                -webkit-box-shadow: 0px 0px 8px 0px rgba(209,210,214,1); -moz-box-shadow: 0px 0px 8px 0px rgba(209,210,214,1); box-shadow: 0px 0px 8px 0px rgba(209,210,214,1);
+                transition: box-shadow 0.5s;transition: -moz-box-shadow 0.5s;transition: -webkit-box-shadow 0.5s; }
+        .err { background: #ff7d7d; }
+        input[type=text], input[type=password] { padding-left: 1.1em; transition: background 0.3s; }
+        input[type=text]:focus, input[type=password]:focus { -webkit-box-shadow: 0px 0px 8px 0px rgba(85,112,219,1); -moz-box-shadow: 0px 0px 8px 0px rgba(85,112,219,1);
+                box-shadow: 0px 0px 8px 0px rgba(85,112,219,1); }
+        input[type=submit] { text-transform: uppercase; background: rgba(85,112,219,1); color: white; cursor: pointer; transition: background 0.3s; }
+        input[type=submit]:hover { background: rgba(105,132,255,1); }
+        #frm-err { color: #d95454; text-align: center; }
+        #loading-wrapper { display: none; text-align: center; }
+        .lds-dual-ring { display: inline-block; width: 64px; height: 64px; }
+        .lds-dual-ring:after { content: " "; display: block; width: 46px; height: 46px; margin: 1px; border-radius: 50%; border: 5px solid rgba(85,112,219,1);
+                border-color: rgba(85,112,219,1) transparent rgba(85,112,219,1) transparent; animation: lds-dual-ring 1.2s linear infinite; }
+        @keyframes lds-dual-ring { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #frm-requester { padding-bottom: 0.7em; text-align: center; font-size: 8pt; color: #888888; }
+        #footer { padding: 0.9em; font-size: 8pt; color: #cccccc; text-align: center; width: 100%; }
+        a, a:hover, a:focus, a:active, a:visited { color: #cccccc; };
+    </style>
+</head>
+<body>
+    <div id="login-container">
+        <h2>FAuth Login</h2>
+        <form method="POST" action="{{BASE_URL}}/login-request?callback={{CALLBACK_URL_ENCODED}}&service={{SERVICE_ENCODED}}&lang={{LANGUAGE_ENCODED}}" onsubmit="return onFrmSub(event);">
+            <label for="frm-edit-username">{{LANG:username}}</label>
+            <input type="text" name="username" id="frm-edit-username" /><br />
+            <label for="frm-edit-password">{{LANG:password}}</label>
+            <input type="password" name="password" id="frm-edit-password" /><br />
             <input type="hidden" name="service" value="{{SERVICE}}" />
             <input type="hidden" name="lang" value="{{LANGUAGE}}" />
             <input type="hidden" name="callback" value="{{CALLBACK_URL}}" />
-            <input type="submit" value="{{LANG:login_submit}}" />
+            <input id="sub" type="submit" value="{{LANG:login_submit}}" />
         </form>
-        <p style="color: red">
-            {{ERROR_STR}}
-        </p>
-    </body>
+        <p id="frm-requester">{{LANG:requester}}: {{SERVICE_TITLE}}</p>
+        <p id="frm-err">{{ERROR_STR}}</p>
+        <div id="loading-wrapper"><div class="lds-dual-ring"></div></div>
+    </div>
+    <div id="footer">Frozen Auth (FAuth)<br />Copyright &copy; <a href="https://ice-wow.eu/" title="iCe Online">iCe Online</a>, since 2005</div>
+
+<script>
+    function onFrmSub(event) {
+        var err = false;
+        var ue = document.getElementById('frm-edit-username'), pe = document.getElementById('frm-edit-password');
+        if (ue.value === '') { ue.className = 'err'; err = true; }
+        if (pe.value === '') { pe.className = 'err'; err = true; }
+        if (err) {
+            setTimeout(function() {
+                var ue = document.getElementById('frm-edit-username'), pe = document.getElementById('frm-edit-password');
+                ue.className = ''; pe.className = '';
+            }, 500);
+            event.preventDefault(); return false;
+        }
+
+        document.getElementById('frm-err').innerHTML = '';
+        document.getElementById('loading-wrapper').style.display = 'block';
+
+        return true;
+    };
+</script>
+
+</body>
 </html>

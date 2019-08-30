@@ -12,18 +12,20 @@ class ExternLoginHandler extends BaseHandler
     {
         // separate GET arguments: callback (URL), service (string), language (cs, en, ...)
         $callback = $request->getParam('callback');
-        $service = $request->getParam('service');
+        $serviceName = $request->getParam('service');
         $language = $request->getParam('lang', 'en');
+
+        $service = $this->services()->getServiceByName($serviceName);
 
         // TODO: check referer and verify, that the callback points to the same domain!
         //       this should be there in case of some configuration error
 
         if (!$callback)
             $pageContents = $this->renderError("No callback URL specified");
-        else if (!$service)
+        else if (!$serviceName || !$service)
             $pageContents = $this->renderError("No service specified");
         else
-            $pageContents = $this->renderLogin($request->getUri()->getBasePath(), $service, $language, $callback);
+            $pageContents = $this->renderLogin($request->getUri()->getBasePath(), $serviceName, $language, $callback, $service['title']);
 
         return $response->withStatus(200)->withBody($pageContents);
     }
@@ -34,8 +36,10 @@ class ExternLoginHandler extends BaseHandler
         $password = $request->getParam('password');
 
         $callback = $request->getParam('callback');
-        $service = $request->getParam('service');
+        $serviceName = $request->getParam('service');
         $language = $request->getParam('lang', 'en');
+
+        $service = $this->services()->getServiceByName($serviceName);
 
         $remoteIP = $this->getRemoteIP();
 
@@ -71,15 +75,15 @@ class ExternLoginHandler extends BaseHandler
             // bad username/password, expired or disabled auth info
             if ($rc === ReturnCode::FAIL_AUTH_FAILED || $rc === ReturnCode::FAIL_AUTH_EXPIRED || $rc === ReturnCode::FAIL_AUTH_DISABLED
                     || $rc === ReturnCode::FAIL_ATTEMPTS_USERNAME || $rc === ReturnCode::FAIL_ATTEMPTS_IP)
-                $pageContents = $this->renderLogin($request->getUri()->getBasePath(), $service, $language, $callback, "auth_err_".$rc);
+                $pageContents = $this->renderLogin($request->getUri()->getBasePath(), $serviceName, $language, $callback, $service['title'], "auth_err_".$rc);
             // other error code is considered generic auth fail
             else
-                $pageContents = $this->renderLogin($request->getUri()->getBasePath(), $service, $language, $callback, "General error");
+                $pageContents = $this->renderLogin($request->getUri()->getBasePath(), $serviceName, $language, $callback, $service['title'], "General error");
 
             return $response->withStatus(200)->withBody($pageContents);
         }
 
-        $token = $this->createToken($usr['id'], $auth_id, [ $service ]);
+        $token = $this->createToken($usr['id'], $auth_id, [ $serviceName ]);
 
         $callback .= (strrpos($callback, '?') > 0) ? '&' : '?';
         $callback .= 'token='.urlencode($token->token);
@@ -106,15 +110,17 @@ class ExternLoginHandler extends BaseHandler
      * @param string $service
      * @param string $language
      * @param string $callback
+     * @param string $serviceTitle
      * @param string $error
      * @return \Slim\Http\Body
      */
-    private function renderLogin($baseUrl, $service, $language, $callback, $error = '')
+    private function renderLogin($baseUrl, $service, $language, $callback, $serviceTitle, $error = '')
     {
         $rnd = new SimpleRenderer("Login", $language);
         return $rnd->renderStream([
             'BASE_URL' => $baseUrl,
             'SERVICE' => $service,
+            'SERVICE_TITLE' => $serviceTitle,
             'SERVICE_ENCODED' => urlencode($service),
             'LANGUAGE' => $language,
             'LANGUAGE_ENCODED' => urlencode($language),

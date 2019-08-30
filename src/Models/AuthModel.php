@@ -6,7 +6,7 @@
 class AuthModel extends BaseModel
 {
     // password security options for all hashing; may be modified at any time, passwords would be rehashed on each verify call if needed
-    const PASS_HASH_OPTIONS = [ 'cost' => 16 ];
+    const PASS_HASH_OPTIONS = [ 'cost' => 1 ];
     // default token validity time in seconds
     const TOKEN_VALIDITY_DEFAULT = 3600; // 1 hour
     // minimum validity time allowed for a token

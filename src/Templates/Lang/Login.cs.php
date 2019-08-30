@@ -4,6 +4,7 @@ return [
     'username' => "Uživatelské jméno",
     'password' => "Heslo",
     'login_submit' => "Přihlásit se",
+    'requester' => "Přihlášení vyžaduje služba",
 
     'auth_err_fail_auth_failed' => "Špatné uživatelské jméno nebo heslo",
     'auth_err_fail_auth_expired' => "Platnost přihlašovacích údajů vypršela",

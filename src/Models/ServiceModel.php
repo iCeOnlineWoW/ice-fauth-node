@@ -5,6 +5,9 @@
  */
 class ServiceModel extends BaseModel
 {
+    /** Maximum number of characters in a single encoded user service data */
+    const MAX_USERDATA_ENCODED_LENGTH = 1024;
+
     public function __construct($dbInstance)
     {
         parent::__construct($dbInstance);
@@ -54,7 +57,7 @@ class ServiceModel extends BaseModel
      */
     public function getUserServiceData($users_id, $services_id): array
     {
-        $res = $this->db->query("SELECT * FROM user_service_data WHERE users_id = ? AND services_id = ?", $users_id, $services_id)->fetch();
+        $res = $this->db->query("SELECT data FROM user_service_data WHERE users_id = ? AND services_id = ?", $users_id, $services_id)->fetch();
         if (!$res || !$res['data'] || strlen($res['data']) === 0)
             return [];
 
@@ -65,8 +68,19 @@ class ServiceModel extends BaseModel
         return $decoded;
     }
 
-    public function setUserServiceData()
+    /**
+     * Stores user service data to database; may fail - the data is limited by maximum length when encoded
+     * The caller is responsible for validating service existence
+     * @return bool
+     */
+    public function setUserServiceData($users_id, $services_id, $data): bool
     {
-        //
+        $encoded = json_encode($data);
+        if (strlen($encoded) > self::MAX_USERDATA_ENCODED_LENGTH)
+            return false;
+
+        $this->db->query("UPDATE user_service_data SET data = ? WHERE users_id = ? AND services_id = ?", $encoded, $users_id, $services_id);
+
+        return true;
     }
 }

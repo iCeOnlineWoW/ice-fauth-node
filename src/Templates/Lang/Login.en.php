@@ -4,8 +4,9 @@ return [
     'username' => "Username",
     'password' => "Password",
     'login_submit' => "Login",
+    'requester' => "Login requested for service",
 
-    'auth_err_fail_auth_failed' => "Wrong username or password",
+    'auth_err_fail_auth_failed' => "Invalid username or password",
     'auth_err_fail_auth_expired' => "This authentication info has expired",
     'auth_err_fail_auth_disabled' => "This authentication info has been disabled",
     'auth_err_fail_attempts_username' => "Maximum number of attempts to login to this account exceeded, try again later",
