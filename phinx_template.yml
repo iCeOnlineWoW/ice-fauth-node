@@ -6,7 +6,7 @@ environments:
     default_database: 'deployment'
 
     deployment:
-        adapter: '${DB_DBMS}'
+        adapter: '${PHINX_DB_DBMS}'
         host: '${DB_HOST}'
         port: ${DB_PORT}
         name: '${DB_DBNAME}'
