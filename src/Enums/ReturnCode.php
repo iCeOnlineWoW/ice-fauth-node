@@ -17,4 +17,6 @@ class ReturnCode
     const FAIL_ATTEMPTS_USERNAME = 'fail_attempts_username';
     // auth failed - number of attempts exceeded for IP address
     const FAIL_ATTEMPTS_IP = 'fail_attempts_ip';
+    // auth failed - user is not authorized to use such service
+    const FAIL_UNAUTH_SERVICE = 'fail_unauth_service';
 }

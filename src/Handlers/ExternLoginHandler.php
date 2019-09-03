@@ -41,6 +41,7 @@ class ExternLoginHandler extends BaseHandler
 
         $service = $this->services()->getServiceByName($serviceName);
 
+        $auth_id = -1;
         $remoteIP = $this->getRemoteIP();
 
         if ($this->guard()->getFailCountForIP($remoteIP) >= $this->guard()->getMaxIPAttempts())
@@ -59,6 +60,21 @@ class ExternLoginHandler extends BaseHandler
             }
         }
 
+        if ($rc === ReturnCode::OK)
+        {
+            // is serviceName in already subscribed services list? no = try subscribe
+            if (!in_array($serviceName, $services))
+            {
+                if (!$service || $service['subscribe_type'] !== ServiceSubscriptionType::OPEN)
+                    $rc = ReturnCode::FAIL_UNAUTH_SERVICE;
+
+                // now we can be sure the service exists an has "open" subscription type
+
+                if (!$this->auth()->subscribeAuthToService($auth_id, $serviceName))
+                    $rc = ReturnCode::FAIL_UNAUTH_SERVICE;
+            }
+        }
+
         if ($rc !== ReturnCode::OK)
         {
             $pageContents = null;
@@ -74,7 +90,7 @@ class ExternLoginHandler extends BaseHandler
 
             // bad username/password, expired or disabled auth info
             if ($rc === ReturnCode::FAIL_AUTH_FAILED || $rc === ReturnCode::FAIL_AUTH_EXPIRED || $rc === ReturnCode::FAIL_AUTH_DISABLED
-                    || $rc === ReturnCode::FAIL_ATTEMPTS_USERNAME || $rc === ReturnCode::FAIL_ATTEMPTS_IP)
+                    || $rc === ReturnCode::FAIL_ATTEMPTS_USERNAME || $rc === ReturnCode::FAIL_ATTEMPTS_IP || $rc === ReturnCode::FAIL_UNAUTH_SERVICE)
                 $pageContents = $this->renderLogin($request->getUri()->getBasePath(), $serviceName, $language, $callback, $service['title'], "auth_err_".$rc);
             // other error code is considered generic auth fail
             else

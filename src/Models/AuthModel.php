@@ -154,7 +154,7 @@ class AuthModel extends BaseModel
     {
         $auth = $this->db->query('SELECT * FROM user_auth_info WHERE id = ?', $auth_id)->fetch();
         if (!$auth)
-            return;
+            return false;
 
         $svcs = unserialize($auth['services']);
         $svcs[] = $service_name;
