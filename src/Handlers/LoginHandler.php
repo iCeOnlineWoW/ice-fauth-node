@@ -84,9 +84,23 @@ class LoginHandler extends BaseHandler
             // the auth info has to be valid for all of requested services
             if (count(array_intersect($services_requested, $services)) === count($services_requested))
                 $services = $services_requested;
-            // otherwise it's not valid
+            // otherwise there are services which need to be subscribed first
             else
-                return $response->withStatus(405);
+            {
+                // check diff for new services, attempt to subscribe, if they are "open"
+                $diff = array_diff($services_requested, $services);
+                foreach ($diff as $rsvc)
+                {
+                    $rsvc_record = $this->services()->getServiceByName($rsvc);
+                    if (!$rsvc_record || $rsvc_record['subscribe_type'] !== ServiceSubscriptionType::OPEN)
+                        return $response->withStatus(405);
+
+                    // now we can be sure the service exists an has "open" subscription type
+
+                    if (!$this->auth()->subscribeAuthToService($auth_id, $rsvc))
+                        return $response->withStatus(405);
+                }
+            }
         }
 
         // now everything should be valid, let us create token, store it to database and send it to user

@@ -145,6 +145,25 @@ class AuthModel extends BaseModel
     }
 
     /**
+     * Subscribes user auth info to a given service
+     * @param int $auth_id
+     * @param string $service_name
+     * @return bool
+     */
+    public function subscribeAuthToService($auth_id, $service_name): bool
+    {
+        $auth = $this->db->query('SELECT * FROM user_auth_info WHERE id = ?', $auth_id)->fetch();
+        if (!$auth)
+            return;
+
+        $svcs = unserialize($auth['services']);
+        $svcs[] = $service_name;
+
+        $this->db->query('UPDATE user_auth_info SET services = ? WHERE id = ?', serialize($svcs), $auth_id);
+        return true;
+    }
+
+    /**
      * Generates a new token using given auth info id (we take services and user id from there)
      * and valid time in seconds
      * @param int $auth_info_id

@@ -14,6 +14,10 @@ $REQUEST_MAP = [
         [ '/login-request', 'GET', 'handleExternalLoginRequest' ],
         [ '/login-request', 'POST', 'handleFormLoginRequest' ],
     ],
+    'ServiceHandler' => [
+        [ '/user-data', 'GET', 'handleGetData' ],
+        [ '/user-data', 'POST', 'handleGetData' ],
+    ],
 ];
 
 // map each request to given handler and function
