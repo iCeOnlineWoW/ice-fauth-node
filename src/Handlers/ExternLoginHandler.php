@@ -67,11 +67,13 @@ class ExternLoginHandler extends BaseHandler
             {
                 if (!$service || $service['subscribe_type'] !== ServiceSubscriptionType::OPEN)
                     $rc = ReturnCode::FAIL_UNAUTH_SERVICE;
+                else
+                {
+                    // now we can be sure the service exists an has "open" subscription type
 
-                // now we can be sure the service exists an has "open" subscription type
-
-                if (!$this->auth()->subscribeAuthToService($auth_id, $serviceName))
-                    $rc = ReturnCode::FAIL_UNAUTH_SERVICE;
+                    if (!$this->auth()->subscribeAuthToService($auth_id, $serviceName))
+                        $rc = ReturnCode::FAIL_UNAUTH_SERVICE;
+                }
             }
         }
 
@@ -80,7 +82,7 @@ class ExternLoginHandler extends BaseHandler
             $pageContents = null;
 
             // accumulate attempt count if not already exceeded the limit
-            if ($rc !== ReturnCode::FAIL_ATTEMPTS_USERNAME && $rc !== ReturnCode::FAIL_ATTEMPTS_IP)
+            if ($rc === ReturnCode::FAIL_ATTEMPTS_USERNAME || $rc === ReturnCode::FAIL_ATTEMPTS_IP)
             {
                 // accumulate username count only if user with such username exists
                 if ($usr)
