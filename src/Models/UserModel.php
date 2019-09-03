@@ -21,7 +21,7 @@ class UserModel extends BaseModel
         if (strlen($username) < 2 || strlen($username) > 32)
             return false;
 
-        if (preg_match('/[^A-Za-z0-9?!_\-\.]/', $string))
+        if (preg_match('/[^A-Za-z0-9?!_\-\.]/', $username))
             return false;
 
         return true;
