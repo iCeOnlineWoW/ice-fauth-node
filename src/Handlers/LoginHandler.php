@@ -25,11 +25,18 @@ class LoginHandler extends BaseHandler
         $username = $args->get('username');
         $auth_type = $args->get('auth_type');
         $auth_string = $args->get('auth_string');
-        $services_requested = $args->get('services');
+        $serviceName = $args->get('service');
         $service_provider_str = $args->get('service_provider_name');
         $service_provider_secret = $args->get('service_provider_secret');
         if ($username === null || $auth_type === null || $auth_string === null || $service_provider_str === null || $service_provider_secret === null)
             return $response->withStatus(400);
+
+        $rsvc_record = $this->services()->getServiceByName($rsvc);
+        if (!$rsvc_record)
+            return $response->withStatus(403);
+
+        // direct = individual fail count (per IP)
+        $individualFailCount = ($rsvc_record['provided_type'] === ServiceProvidedType::DIRECT);
 
         $remoteIP = $this->getRemoteIP();
 
@@ -64,6 +71,11 @@ class LoginHandler extends BaseHandler
         // bad username or auth info
         if ($rc === ReturnCode::FAIL_AUTH_FAILED)
         {
+            if ($individualFailCount)
+                $this->guard()->accumulateFailForIP($remoteIP);
+            else
+                $this->guard()->accumulateFailForServiceProviderIP($remoteIP);
+
             $this->guard()->accumulateFailForUsername($username);
 
             return $response->withStatus(401);
@@ -78,28 +90,18 @@ class LoginHandler extends BaseHandler
         else if ($rc !== ReturnCode::OK)
             return $response->withStatus(401);
 
-        // login request is for a subset of services
-        if ($services_requested)
+        // is serviceName in already subscribed services list? no = try subscribe
+        if (!in_array($serviceName, $services))
         {
-            // the auth info has to be valid for all of requested services
-            if (count(array_intersect($services_requested, $services)) === count($services_requested))
-                $services = $services_requested;
-            // otherwise there are services which need to be subscribed first
+            // service is not open, therefore we cannot subscribe
+            if ($rsvc_record['subscribe_type'] !== ServiceSubscriptionType::OPEN)
+                return $response->withStatus(405);
             else
             {
-                // check diff for new services, attempt to subscribe, if they are "open"
-                $diff = array_diff($services_requested, $services);
-                foreach ($diff as $rsvc)
-                {
-                    $rsvc_record = $this->services()->getServiceByName($rsvc);
-                    if (!$rsvc_record || $rsvc_record['subscribe_type'] !== ServiceSubscriptionType::OPEN)
-                        return $response->withStatus(405);
+                // now we can be sure the service exists an has "open" subscription type
 
-                    // now we can be sure the service exists an has "open" subscription type
-
-                    if (!$this->auth()->subscribeAuthToService($auth_id, $rsvc))
-                        return $response->withStatus(405);
-                }
+                if (!$this->auth()->subscribeAuthToService($auth_id, $serviceName))
+                    return $response->withStatus(405);
             }
         }
 
