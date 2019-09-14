@@ -214,7 +214,10 @@ class AuthModel extends BaseModel
         if (!$rec || !$this->isAuthDateValid($rec))
             return new TokenInfo(); // this will generate invalid token info
 
-        return new TokenInfo($rec['id'], $rec['users_id'], unserialize($rec['services']), true, $rec['value']);
+        $now = new DateTime();
+        $valid = ($res['valid_from'] <= $now && $res['valid_to'] >= $now);
+
+        return new TokenInfo($rec['id'], $rec['users_id'], unserialize($rec['services']), $valid, $rec['value']);
     }
 
     /**

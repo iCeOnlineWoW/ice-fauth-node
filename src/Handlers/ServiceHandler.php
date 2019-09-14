@@ -11,12 +11,23 @@ class ServiceHandler extends BaseHandler
     public function handleGetData(Request $request, Response $response, ParameterContainer $args)
     {
         $username = $request->getParam('username');
+        $auth_token = $request->getParam('auth_token');
         $service = $request->getParam('service');
-        $secret = $request->getParam('secret');
-        if (!$service || !$secret || !$username)
+        $secret = $request->getParam('service_secret');
+        if (!$service || !$secret || (!$username && !$auth_token))
             return $response->withStatus(400);
 
-        $usr = $this->users()->getUserByUsername($username);
+        if ($username)
+            $usr = $this->users()->getUserByUsername($username);
+        else if ($auth_token)
+        {
+            $tkinfo = $this->auth()->getTokenInfo($auth_token);
+            if ($tkinfo->valid)
+                $usr = $this->users()->getUserById($tkinfo->users_id);
+            else
+                $response->withStatus(401);
+        }
+
         if (!$usr)
             return $response->withStatus(404);
 
@@ -37,13 +48,24 @@ class ServiceHandler extends BaseHandler
     public function handleSetData(Request $request, Response $response, ParameterContainer $args)
     {
         $username = $request->getParam('username');
+        $auth_token = $request->getParam('auth_token');
         $service = $request->getParam('service');
-        $secret = $request->getParam('secret');
+        $secret = $request->getParam('service_secret');
         $data = $request->getParam('data');
-        if (!$service || !$secret || !$username || !$data)
+        if (!$service || !$secret || (!$username && !$auth_token) || !$data)
             return $response->withStatus(400);
 
-        $usr = $this->users()->getUserByUsername($username);
+        if ($username)
+            $usr = $this->users()->getUserByUsername($username);
+        else if ($auth_token)
+        {
+            $tkinfo = $this->auth()->getTokenInfo($auth_token);
+            if ($tkinfo->valid)
+                $usr = $this->users()->getUserById($tkinfo->users_id);
+            else
+                $response->withStatus(401);
+        }
+
         if (!$usr)
             return $response->withStatus(404);
 
