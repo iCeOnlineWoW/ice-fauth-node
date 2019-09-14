@@ -26,12 +26,11 @@ class LoginHandler extends BaseHandler
         $auth_type = $args->get('auth_type');
         $auth_string = $args->get('auth_string');
         $serviceName = $args->get('service');
-        $service_provider_str = $args->get('service_provider_name');
-        $service_provider_secret = $args->get('service_provider_secret');
-        if ($username === null || $auth_type === null || $auth_string === null || $service_provider_str === null || $service_provider_secret === null)
+        $serviceSecret = $args->get('service_secret');
+        if ($username === null || $auth_type === null || $auth_string === null || $serviceSecret === null)
             return $response->withStatus(400);
 
-        $rsvc_record = $this->services()->getServiceByName($rsvc);
+        $rsvc_record = $this->services()->getServiceByName($serviceName);
         if (!$rsvc_record)
             return $response->withStatus(403);
 
@@ -43,7 +42,7 @@ class LoginHandler extends BaseHandler
         if ($this->guard()->getFailCountForServiceProviderIP($remoteIP) >= $this->guard()->getMaxServiceProviderIPAttempts())
             return $response->withStatus(409);
 
-        if (!$this->services()->validateServiceSecret($service_provider_str, $service_provider_secret))
+        if (!$this->services()->validateServiceSecret($serviceName, $serviceSecret))
         {
             $this->guard()->accumulateFailForServiceProviderIP($remoteIP);
             return $response->withStatus(403);
