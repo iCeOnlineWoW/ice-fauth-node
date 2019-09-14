@@ -6,7 +6,7 @@
 class AuthModel extends BaseModel
 {
     // password security options for all hashing; may be modified at any time, passwords would be rehashed on each verify call if needed
-    const PASS_HASH_OPTIONS = [ 'cost' => 1 ];
+    const PASS_HASH_OPTIONS = [ 'cost' => 4 ];
     // default token validity time in seconds
     const TOKEN_VALIDITY_DEFAULT = 3600; // 1 hour
     // minimum validity time allowed for a token
@@ -76,6 +76,16 @@ class AuthModel extends BaseModel
     }
 
     /**
+     * Generates hash of given string
+     * @param string $value
+     * @return string
+     */
+    public static function generateHash($value): string
+    {
+        return password_hash($value, PASSWORD_DEFAULT, self::PASS_HASH_OPTIONS);
+    }
+
+    /**
      * Validates given password for given user
      * @param int $users_id
      * @param string $value
@@ -104,7 +114,7 @@ class AuthModel extends BaseModel
         // developers decide to use argon2 instead, so we need to rehash the password and store new hash
         if (password_needs_rehash($dbHash, PASSWORD_DEFAULT, self::PASS_HASH_OPTIONS))
         {
-            $newHash = password_hash($value, PASSWORD_DEFAULT, self::PASS_HASH_OPTIONS);
+            $newHash = self::generateHash($value);
             $this->db->query("UPDATE user_auth_info SET value = ? WHERE id = ?", $newHash, $rec['id']);
         }
 
@@ -134,7 +144,7 @@ class AuthModel extends BaseModel
         $this->db->query("INSERT INTO user_auth_info", [
             'users_id' => $users_id,
             'type' => AuthType::PASSWORD,
-            'value' => password_hash($value, PASSWORD_DEFAULT, self::PASS_HASH_OPTIONS),
+            'value' => self::generateHash($value),
             'services' => serialize($services),
             'valid_from' => $valid_from ? (new DateTime())->setTimestamp($valid_from) : null,
             'valid_to' => $valid_to ? (new DateTime())->setTimestamp($valid_to) : null,
