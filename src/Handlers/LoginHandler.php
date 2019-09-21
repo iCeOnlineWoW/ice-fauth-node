@@ -106,7 +106,7 @@ class LoginHandler extends BaseHandler
 
         // now everything should be valid, let us create token, store it to database and send it to user
 
-        $token = $this->createToken($usr['id'], $auth_id, $services);
+        $token = $this->createToken($usr['id'], $serviceName);
 
         return $response->withStatus(200)->withJson([
             'auth_token' => $token->token,

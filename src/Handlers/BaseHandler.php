@@ -74,18 +74,17 @@ abstract class BaseHandler
     /**
      * Creates token for given service, replaces existing if needed
      * @param int $users_id
-     * @param int $auth_id
-     * @param array $services
+     * @param string $service
      * @return TokenInfo
      */
-    protected function createToken($users_id, $auth_id, $services): TokenInfo
+    protected function createToken($users_id, $service): TokenInfo
     {
-        // at first, see if there's a token for those services - if yes, invalidate it
-        $existing = $this->auth()->getTokenForServices($users_id, $services);
+        // at first, see if there's a token for the service - if yes, invalidate it
+        $existing = $this->auth()->getTokenForService($users_id, $service);
         if ($existing->valid)
             $this->auth()->removeToken($existing->id);
 
-        return $this->auth()->generateToken($auth_id);
+        return $this->auth()->generateToken($users_id, $service);
     }
 
     /**

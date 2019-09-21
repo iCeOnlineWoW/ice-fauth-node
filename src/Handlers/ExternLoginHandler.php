@@ -101,7 +101,7 @@ class ExternLoginHandler extends BaseHandler
             return $response->withStatus(200)->withBody($pageContents);
         }
 
-        $token = $this->createToken($usr['id'], $auth_id, [ $serviceName ]);
+        $token = $this->createToken($usr['id'], $serviceName);
 
         $callback .= (strrpos($callback, '?') > 0) ? '&' : '?';
         $callback .= 'token='.urlencode($token->token);

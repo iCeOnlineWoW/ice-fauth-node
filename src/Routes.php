@@ -17,6 +17,7 @@ $REQUEST_MAP = [
     'ServiceHandler' => [
         [ '/user-data', 'GET', 'handleGetData' ],
         [ '/user-data', 'POST', 'handleGetData' ],
+        [ '/mediate', 'GET', 'handleMediateService' ],
     ],
 ];
 

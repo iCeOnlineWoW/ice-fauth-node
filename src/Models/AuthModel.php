@@ -176,31 +176,28 @@ class AuthModel extends BaseModel
     /**
      * Generates a new token using given auth info id (we take services and user id from there)
      * and valid time in seconds
-     * @param int $auth_info_id
+     * @param int $users_id
+     * @param string $service
      * @param int $valid_for
      * @return TokenInfo
      */
-    public function generateToken($auth_info_id, $valid_for = self::TOKEN_VALIDITY_DEFAULT): TokenInfo
+    public function generateToken($users_id, $service, $valid_for = self::TOKEN_VALIDITY_DEFAULT): TokenInfo
     {
         if ($valid_for < self::TOKEN_VALIDITY_MIN || $valid_for > self::TOKEN_VALIDITY_MAX)
-            return new TokenInfo();
-
-        $rec = $this->db->query("SELECT * FROM user_auth_info WHERE id = ?", $auth_info_id)->fetch();
-        if (!$rec)
             return new TokenInfo();
 
         // token is generated using cryptographically safe generator built into PHP, and then converted to a string
         $token = bin2hex(random_bytes(self::TOKEN_BYTE_LENGTH));
 
         $this->db->query("INSERT INTO user_auth_token", [
-            'users_id' => $rec['users_id'],
-            'services' => $rec['services'],
+            'users_id' => $users_id,
+            'services' => serialize([ $service ]),  // single-service token
             'value' => $token,
             'valid_from' => new DateTime(),
             'valid_to' => new DateTime('+'.$valid_for.' seconds')
         ]);
 
-        return new TokenInfo($this->db->getInsertId(), $rec['users_id'], unserialize($rec['services']), true, $token);
+        return new TokenInfo($this->db->getInsertId(), $users_id, [ $service ], true, $token);
     }
 
     /**
@@ -222,17 +219,18 @@ class AuthModel extends BaseModel
     /**
      * Retrieves existing token for requested services, but only if it already exists!
      * @param int $users_id
-     * @param array $services
+     * @param string $service
      * @return TokenInfo
      */
-    public function getTokenForServices($users_id, $services): TokenInfo
+    public function getTokenForService($users_id, $service): TokenInfo
     {
         $userTokens = $this->db->query("SELECT * FROM user_auth_token WHERE users_id = ?", $users_id)->fetchAll();
 
         foreach ($userTokens as $rec)
         {
-            if ($this->isAuthDateValid($rec) && count(array_intersect($services, unserialize($rec['services']) )) === count($services))
-                return new TokenInfo($rec['id'], $rec['users_id'], unserialize($rec['services']), true, $rec['value']);
+            $svcs = unserialize($rec['services']);
+            if ($this->isAuthDateValid($rec) && in_array($service, $svcs))
+                return new TokenInfo($rec['id'], $rec['users_id'], $svcs, true, $rec['value']);
         }
 
         return new TokenInfo();

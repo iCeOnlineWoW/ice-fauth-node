@@ -83,4 +83,43 @@ class ServiceModel extends BaseModel
 
         return true;
     }
+
+    /**
+     * Retrieves all mediated services by given service
+     * @param int $service_id
+     * @return array
+     */
+    public function getMediatedServiceArray(int $service_id): array
+    {
+        $svcs = $this->db->query("SELECT mediated_service_id FROM service_mediator WHERE parent_service_id = ?", $service_id);
+
+        if (!$svcs)
+            return [];
+
+        $res = [];
+        foreach ($svcs as $svc)
+            $res[] = $svc['mediated_service_id'];
+
+        return $res;
+    }
+
+    /**
+     * Determines, whether the service could be mediated by given parent service or not
+     * @param int $parent_service_id
+     * @param int $mediated_service_id
+     * @return bool
+     */
+    public function isMediatedByService(int $parent_service_id, int $mediated_service_id): bool
+    {
+        $med = $this->db->query("SELECT mediated_service_id FROM service_mediator ".
+                "WHERE parent_service_id = ? AND mediated_service_id = ?",
+                $parent_service_id, $mediated_service_id)->fetch();
+
+        if (!$med)
+            return false;
+
+        // Future versions may include some mediating conditions here (time-limited mediation? context-based mediation?)
+
+        return true;
+    }
 }
