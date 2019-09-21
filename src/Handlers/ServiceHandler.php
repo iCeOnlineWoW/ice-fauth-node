@@ -25,7 +25,7 @@ class ServiceHandler extends BaseHandler
             if ($tkinfo->valid)
                 $usr = $this->users()->getUserById($tkinfo->users_id);
             else
-                $response->withStatus(401);
+                return $response->withStatus(401);
         }
 
         if (!$usr)
