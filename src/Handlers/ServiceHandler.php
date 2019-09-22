@@ -112,13 +112,13 @@ class ServiceHandler extends BaseHandler
         if (!$this->services()->validateServiceSecret($service, $secret))
             return $response->withStatus(403);
 
-        $parent_id = $this->services()->getServiceByName($service);
-        $mediated_id = $this->services()->getServiceByName($service_to_mediate);
+        $parent = $this->services()->getServiceByName($service);
+        $mediated = $this->services()->getServiceByName($service_to_mediate);
 
-        if (!$parent_id || !$mediated_id)
+        if (!$parent || !$mediated)
             return $response->withStatus(404);
 
-        if (!$this->services()->isMediatedByService($parent_id, $mediated_id))
+        if (!$this->services()->isMediatedByService($parent['id'], $mediated['id']))
             return $response->withStatus(406);
 
         $token = $this->createToken($usr['id'], $service_to_mediate);
