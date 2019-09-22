@@ -124,7 +124,7 @@ class LoginHandler extends BaseHandler
      */
     public function handleValidateToken(Request $request, Response $response, ParameterContainer $args)
     {
-        $token = $args->get('token');
+        $token = $args->get('auth_token');
         $serviceName = $args->get('service');
         $serviceSecret = $args->get('service_secret');
         if ($token === null || $serviceName === null || $serviceSecret === null)
