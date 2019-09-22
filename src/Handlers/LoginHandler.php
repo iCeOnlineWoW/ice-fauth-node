@@ -118,20 +118,20 @@ class LoginHandler extends BaseHandler
      *      200 - OK
      *      400 - request body does not contain everything it should
      *      401 - token is not valid for given (sub)set of services
-     *      404 - requested service not found
+     *      404 - requested service (or user) not found
      *      409 - service secret does not match
      *      410 - token is not valid (expired, or never was)
      */
     public function handleValidateToken(Request $request, Response $response, ParameterContainer $args)
     {
         $token = $args->get('token');
-        $services_requested = $args->get('services');
-        $services_secrets = $args->get('secrets');
-        if ($token === null || $services_requested === null || $services_secrets === null || count($services_requested) !== count($services_secrets))
+        $serviceName = $args->get('service');
+        $serviceSecret = $args->get('service_secret');
+        if ($token === null || $serviceName === null || $serviceSecret === null)
             return $response->withStatus(400);
 
-        // we store service records for later
-        $services = [];
+        $services_requested = [ $serviceName ];
+        $services_secrets = [ $serviceSecret ];
 
         // check each service - if it exists and if it supplies valid secret
         foreach ($services_requested as $i => $srv)
@@ -142,8 +142,6 @@ class LoginHandler extends BaseHandler
             // case-sensitive comparison
             if (strcmp($serviceRecord['secret'], $services_secrets[$i]) !== 0)
                 return $response->withStatus(409);
-
-            $services[$i] = $serviceRecord;
         }
 
         // look-up token info; if the token is not valid, or is not created for requested services, abort
@@ -156,19 +154,14 @@ class LoginHandler extends BaseHandler
         $usr = $this->users()->getUserById($info->users_id);
         // this should not happen, because database constraints and foreign keys and stuff
         if (!$usr)
-            return $response->withStatus(401);
-
-        $serviceData = [];
-        foreach ($services as $srv)
-            $serviceData[$srv['name']] = $this->services()->getUserServiceData($usr['id'], $srv['id']);
+            return $response->withStatus(404);
 
         // we don't want to expose user ID, because that's our internal information
         // rather, services should identify user by his unique username or email
         unset($usr['id']);
 
         return $response->withStatus(200)->withJson([
-            'user' => $usr,
-            'services' => $serviceData
+            'user' => $usr
         ]);
     }
 }
