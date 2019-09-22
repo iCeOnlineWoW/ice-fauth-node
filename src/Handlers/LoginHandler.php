@@ -108,8 +108,13 @@ class LoginHandler extends BaseHandler
 
         $token = $this->createToken($usr['id'], $serviceName);
 
+        // we don't want to expose user ID, because that's our internal information
+        // rather, services should identify user by his unique username or email
+        unset($usr['id']);
+
         return $response->withStatus(200)->withJson([
             'auth_token' => $token->token,
+            'user' => $usr
         ]);
     }
 
